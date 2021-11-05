@@ -1,6 +1,5 @@
 import csv
 import time
-
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent  # pip install fake-useragent
@@ -14,7 +13,7 @@ options.add_argument(ua.random)
 options.set_preference('dom.webdriver.enabled', False)
 options.add_argument('--headless')
 
-site = 'https://intecron-msk.ru/stalnie-dveri/gotovie-resheniya.html'
+site = 'https://intecron-msk.ru/mezhkomnatnie-dveri/v-nalichii.html'
 domain = 'https://intecron-msk.ru'
 
 headers = {
@@ -27,7 +26,7 @@ def get_page(url):
     req = requests.get(url, headers=headers)
     src = req.text
 
-    with open('index.html', 'w') as file:
+    with open('index_2.html', 'w') as file:
         index = file.write(src)
     return index
 
@@ -36,7 +35,7 @@ def get_page_data(page):
     with open(page) as f:
         src = f.read()
         soup = BeautifulSoup(src, 'lxml')
-        with open('intecron.csv', 'w', encoding='UTF-8') as file:
+        with open('intecron_2.csv', 'w', encoding='UTF-8') as file:
             writer = csv.writer(file)
             writer.writerow(
                 (
@@ -64,7 +63,6 @@ def get_page_data(page):
         for urls in soup.find_all('div', class_='catalog-item__title'):
             url = urls.find('a').get('href')
             browser.get(url)
-            print(url)
             time.sleep(2)
 
             name = browser.find_element(By.TAG_NAME, 'h1').text
@@ -86,10 +84,14 @@ def get_page_data(page):
             except:
                 door_filling = None
             try:
-                external_panel_1 = browser.find_element(By.XPATH,'/html/body/div[1]/div[2]/div[2]/div[1]/div/div/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/p').text.strip()
                 external_panel = browser.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[2]/div[1]/div/div/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/p[2]').text.strip()
             except:
                 external_panel = None
+            try:
+                external_panel_1 = browser.find_element(By.XPATH,
+                                                        '/html/body/div[1]/div[2]/div[2]/div[1]/div/div/div[2]/div[3]/div[2]/div[2]/div[2]/div[2]/p').text.strip()
+            except:
+                external_panel_1 = None
             img_external_panel = browser.find_element(By.XPATH,
                                                       '/html/body/div[1]/div[2]/div[2]/div[1]/div/div/div[2]/div[1]/div[1]/div[1]/div/div[1]/a').get_attribute(
                 'href')
@@ -104,7 +106,7 @@ def get_page_data(page):
                 img_internal_panel = item_name.find_element_by_tag_name('img').get_attribute('src')
                 price = item_name.find_element_by_tag_name('input').get_attribute('value')
 
-                with open('intecron.csv', 'a', encoding='UTF-8') as file:
+                with open('intecron_2.csv', 'a', encoding='UTF-8') as file:
                     writer = csv.writer(file)
                     writer.writerow(
                             (
@@ -133,7 +135,7 @@ def get_page_data(page):
 
 def main():
     get_page(site)
-    get_page_data('index.html')
+    get_page_data('index_2.html')
 
 
 if __name__ == '__main__':
