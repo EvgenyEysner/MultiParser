@@ -2,28 +2,45 @@
 import requests
 # import csv
 from bs4 import BeautifulSoup
+from fake_useragent import UserAgent  # pip install fake-useragent
 import json
-# import re
+import re
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 
 
-site = 'https://guardian.ru/stalnye_dveri/'
+options = webdriver.FirefoxOptions()
+ua = UserAgent()
+
+options.add_argument(ua.random)
+options.set_preference('dom.webdriver.enabled', False)
+options.add_argument('--headless')
+
+browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
+
+site = 'https://guardian.ru/katalog/'
 domain = 'https://guardian.ru'
-headers = {
+header = {
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
 }
 
 
-def get_json(lst):
-    with open('file.json', 'w') as file:
-        # indent - отступы, ensure_ascii - убирает символы и позволяет устранить проблемы с кодировкой
-        json.dump(lst, file, indent=4, ensure_ascii=False)
-        return json
+def make_request(url, header):
+    req = requests.get(url, headers=header)
+    res = req.text
+    soup = BeautifulSoup(res, 'lxml')
+    return soup
+
+
+def pagination(model, url):
+    for page in range(1, 3):
+        page_url = f'{url}/?sort=position&direction=asc&page={page}'
 
 
 # save the page
 def get_page(url):
-    req = requests.get(url, headers=headers)
+    req = requests.get(url, headers=header)
     src = req.text
 
     with open('index.html', 'w') as file:
@@ -38,53 +55,62 @@ def get_data(html):
         src = f.read()
         soup = BeautifulSoup(src, 'lxml')
 
-        item_data = []
-        specifications = []
-        for link in soup.find_all('div', class_='card'):
-            name = link.find('h2', attrs={'itemprop': 'name'}).text
-            item_urls = domain + link.find('h2', attrs={'itemprop': 'name'}).find('a').get('href')
-            price = link.find('span', class_='price').text
-            image = domain + link.find('div', class_='card-image').find('img').get('src')
+        menu = soup.select('div.secondary:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li > a')
+        for link in menu:
+            url = domain + link.get('href')
+            print(url)
+            soup = make_request(url, header)
+            pages = '/katalog/kupit/?arrFilter_pf%5BDOOR_MODEL_APPLY%5D=20256&set_filter=Y&PAGEN_1=2'
+            print(pages)
 
-            # get data from item page
-            req_item_urls = requests.get(item_urls, headers=headers)
-            items_src = req_item_urls.text
-            soup = BeautifulSoup(items_src, 'lxml')
-            short_desc = soup.find('section', id='model-design').find_next('h2').text
-            img_desc = [domain + img.get('src') for img in soup.find_all('img', attrs={'itemprop': 'contentUrl'})]
-            long_dec = [desc.text.strip() for desc in soup.find_all('div', attrs={'itemprop': 'description'})]
-            specification_url = domain + soup.find('a', class_='read-more').get('href')
-            item_data.append(
-                    {
-                        'Наименование': name,
-                        'Панель внешняя': short_desc,
-                        'Картинка панель внешняя': image,
-                        'Картинка панель внутренняя': img_desc,
-                        'Описание товара': long_dec,
-                        'Цена товара': price,
-                        'Изображение товара': image,
-                        'Галерея': img_desc,
-                    }
-                )
-            get_json(item_data)
 
-            # get specification from specification page
-            req_specification = requests.get(specification_url, headers=headers)
-            specification_src = req_specification.text
-            soup = BeautifulSoup(specification_src, 'lxml')
-
-            for row in soup.find('table').find('tbody').find_all('tr'):
-                col = row.find_all('td')
-                if len(col) != 1:
-                    title = col[0].text
-                    description = col[1].text.strip().replace('\t', '')
-
-                    specifications.append(
-                        {
-                            title: description
-                        }
-                    )
-            get_json(specifications)
+        # item_data = []
+        # specifications = []
+        # for link in soup.find_all('div', class_='card'):
+        #     name = link.find('h2', attrs={'itemprop': 'name'}).text
+        #     item_urls = domain + link.find('h2', attrs={'itemprop': 'name'}).find('a').get('href')
+        #     price = link.find('span', class_='price').text
+        #     image = domain + link.find('div', class_='card-image').find('img').get('src')
+        #
+        #     # get data from item page
+        #     req_item_urls = requests.get(item_urls, headers=headers)
+        #     items_src = req_item_urls.text
+        #     soup = BeautifulSoup(items_src, 'lxml')
+        #     short_desc = soup.find('section', id='model-design').find_next('h2').text
+        #     img_desc = [domain + img.get('src') for img in soup.find_all('img', attrs={'itemprop': 'contentUrl'})]
+        #     long_dec = [desc.text.strip() for desc in soup.find_all('div', attrs={'itemprop': 'description'})]
+        #     specification_url = domain + soup.find('a', class_='read-more').get('href')
+        #     item_data.append(
+        #             {
+        #                 'Наименование': name,
+        #                 'Панель внешняя': short_desc,
+        #                 'Картинка панель внешняя': image,
+        #                 'Картинка панель внутренняя': img_desc,
+        #                 'Описание товара': long_dec,
+        #                 'Цена товара': price,
+        #                 'Изображение товара': image,
+        #                 'Галерея': img_desc,
+        #             }
+        #         )
+        #     get_json(item_data)
+        #
+        #     # get specification from specification page
+        #     req_specification = requests.get(specification_url, headers=headers)
+        #     specification_src = req_specification.text
+        #     soup = BeautifulSoup(specification_src, 'lxml')
+        #
+        #     for row in soup.find('table').find('tbody').find_all('tr'):
+        #         col = row.find_all('td')
+        #         if len(col) != 1:
+        #             title = col[0].text
+        #             description = col[1].text.strip().replace('\t', '')
+        #
+        #             specifications.append(
+        #                 {
+        #                     title: description
+        #                 }
+        #             )
+        #     get_json(specifications)
 
 
 def main():
