@@ -1,4 +1,6 @@
 # import pandas
+import time
+
 import requests
 # import csv
 from bs4 import BeautifulSoup
@@ -18,10 +20,11 @@ options.add_argument('--headless')
 
 browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
 
+
 site = 'https://guardian.ru/katalog/'
 domain = 'https://guardian.ru'
 header = {
-    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0',
+    'User-Agent': ua.random,
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
 }
 
@@ -51,6 +54,7 @@ def get_page(url):
 # read index.html
 def get_data(html):
 
+    
     with open(html) as f:
         src = f.read()
         soup = BeautifulSoup(src, 'lxml')
@@ -58,10 +62,32 @@ def get_data(html):
         menu = soup.select('div.secondary:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li > a')
         for link in menu:
             url = domain + link.get('href')
-            print(url)
-            soup = make_request(url, header)
-            pages = '/katalog/kupit/?arrFilter_pf%5BDOOR_MODEL_APPLY%5D=20256&set_filter=Y&PAGEN_1=2'
-            print(pages)
+            # soup = make_request(url, header)
+            browser.get(url)
+            time.sleep(5)
+            
+            links = browser.find_element(By.XPATH, '/html/body/section[5]/div/div/div/div[2]/div[2]')
+            print(links)
+            # index = soup.find('div', attrs=re.compile('interchange'))
+            # for link in index:
+            #     link.has_attr('data-interchange')
+            #     print(link)
+            # 
+
+
+            # for link in browser.find_elements(By.XPATH, '/html/body/section[5]/div/div/div/div[2]/div[2]/ul/li/a'):
+            #     page_links.append(link)
+            #
+            # links = [link.click() for link in page_links]
+            # links = [link.text for link in soup.select('.pagination > li > a')]
+
+            # soup = make_request(url, header)
+            # pagination = soup.select('.pagination > li > a')
+            # for link in pagination:
+            #     link.click()
+            # print(pagination)
+            # pages = '/katalog/kupit/?arrFilter_pf%5BDOOR_MODEL_APPLY%5D=20256&set_filter=Y&PAGEN_1=2'
+
 
 
         # item_data = []
@@ -114,7 +140,7 @@ def get_data(html):
 
 
 def main():
-    get_page(site)
+    # get_page(site)
     get_data('index.html')
 
 
