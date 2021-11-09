@@ -7,13 +7,14 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent  # pip install fake-useragent
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 
-# options = webdriver.FirefoxOptions()
-# options.set_preference('dom.webdriver.enabled', False)
+options = webdriver.FirefoxOptions()
+options.set_preference('dom.webdriver.enabled', False)
 ua = UserAgent()
-# options.add_argument(ua.random)
-# options.add_argument('--headless')
-# browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
+options.add_argument(ua.random)
+options.add_argument('--headless')
+browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
 site = 'https://argusmsk.ru/category/all?sort_by=totalcount'
 domain = 'https://argusmsk.ru'
 
@@ -78,23 +79,35 @@ def get_page_data(page):
         soup = BeautifulSoup(src, 'lxml')
 
         pages = int(soup.find('ul', class_='pager').find_all('a')[-1].get('href').split('=')[2].strip())
-        for page in range(0, 1): # pages + 1
+        for page in range(0, 1):  # pages + 1
             page_url = f'https://argusmsk.ru/category/all?sort_by=totalcount&page={page}'
             soup = make_request(page_url)
-            links = [domain + link.find('a').get('href') for link in soup.find_all('div', class_='door')]
-        for item in links:
-            soup = make_request(item)
-            try:
-                panels = soup.find('div', class_='item-desc').find_all(href=re.compile('paneli'))
-                desc = soup.find('div', id='block-system-main')
-                name = soup.find('div', id=re.compile('node-')).find('h2').text.replace('✓ Хит продаж', '').replace('✓ Скидки и Акции', '')
-                out_price = soup.find(text=re.compile('Снаружи металл')).next.text.replace('₽', '').strip()
-                in_price = soup.find(text=re.compile('Снаружи панель')).next.text.replace('₽', '').strip()
-            except:
-                out_price = None
-                in_price = None
-            print(in_price)
-            
+            urls = [domain + link.find('a').get('href') for link in soup.find_all('div', class_='door')]
+            time.sleep(1)
+        try:
+            for title in soup.find_all('div', class_='ci-title'):
+                name = title.text
+            for item_price in soup.find_all('div', class_='ci-price'):
+                base_price = item_price.text.replace('₽', '').strip()
+            price = base_price
+        except:
+            pass
+        try:
+            for url in urls:
+                browser.get(url)
+                try:
+                    without = browser.find_element(By.XPATH,'/html/body/div[3]/div[2]/div/div[2]/div[2]/div/div/div[1]/div[2]//*[contains(text(),"Снаружи металл")]//following-sibling::span').text
+                    with_panel = browser.find_element(By.XPATH, '/html/body/div[3]/div[2]/div/div[2]/div[2]/div/div/div[1]/div[2]//*[contains(text(),"Снаружи панель")]//following-sibling::span').text
+                    price = {
+                        'Снаружи металл': without,
+                        'Снаружи панель': with_panel
+                    }
+                except:
+                    without = None
+                    with_panel = None
+        finally:
+            browser.close()
+
             # for item in links:
             #     browser.get(item)
             #     try:
@@ -123,7 +136,7 @@ def get_items_data(page_url):
 
 
 def main():
-    #get_page(site)
+    # get_page(site)
     get_page_data('index.html')
 
 
