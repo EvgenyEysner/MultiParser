@@ -11,14 +11,14 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-options = webdriver.FirefoxOptions()
+# options = webdriver.FirefoxOptions()
 ua = UserAgent()
 
-options.add_argument(ua.random)
-options.set_preference('dom.webdriver.enabled', False)
-options.add_argument('--headless')
-
-browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
+# options.add_argument(ua.random)
+# options.set_preference('dom.webdriver.enabled', False)
+# options.add_argument('--headless')
+#
+# browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
 
 
 site = 'https://guardian.ru/katalog/'
@@ -62,12 +62,14 @@ def get_data(html):
         menu = soup.select('div.secondary:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li > a')
         for link in menu:
             url = domain + link.get('href')
-            # soup = make_request(url, header)
-            browser.get(url)
-            time.sleep(5)
+            soup = make_request(url, header)
+            div = soup.find('h1').next.next.next.next.next_element.next.next
+            print(div)
+            # browser.get(url)
+            # time.sleep(5)
             
-            links = browser.find_element(By.XPATH, '/html/body/section[5]/div/div/div/div[2]/div[2]')
-            print(links)
+            # links = browser.find_element(By.XPATH, '/html/body/section[5]/div/div/div/div[2]/div[2]')
+            # print(links)
             # index = soup.find('div', attrs=re.compile('interchange'))
             # for link in index:
             #     link.has_attr('data-interchange')
