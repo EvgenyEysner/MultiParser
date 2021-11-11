@@ -1,6 +1,5 @@
 import csv
 import re
-
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent  # pip install fake-useragent
@@ -27,8 +26,6 @@ def get_page(url):
 
 def get_page_data(url):
 
-    product_urls = []
-    articles = {}
     req = requests.get(url, headers=headers)
     src = req.text
     soup = BeautifulSoup(src, 'lxml')
@@ -75,7 +72,6 @@ def get_page_data(url):
             img = [domain + image.get('href') for image in soup.find_all('a', attrs={'data-gallery': 'gal-item'})]
             desc = soup.find('div', id='text')
             gallery = None
-            external_panel_ = None
             manufacturer = 'ООО "Заводские двери"'
             img_external_panel = img[0]
             img_internal_panel = img[0]

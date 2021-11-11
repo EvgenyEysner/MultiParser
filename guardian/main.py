@@ -11,8 +11,8 @@ from selenium.webdriver.common.by import By
 options = webdriver.FirefoxOptions()
 ua = UserAgent()
 
-# options.add_argument(ua.random)
-# options.set_preference('dom.webdriver.enabled', False)
+options.add_argument(ua.random)
+options.set_preference('dom.webdriver.enabled', False)
 options.add_argument('--headless')
 browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
 

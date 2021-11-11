@@ -146,7 +146,7 @@ def get_page_data(url):
 
 
 def main():
-    # get_page(site)
+    get_page(site)
     get_page_data(site)
 
 

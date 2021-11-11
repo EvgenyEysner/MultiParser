@@ -16,27 +16,6 @@ headers = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
 }
 
-proxies1 = {
-    'http': 'http://Uv37g8nf:yjTQ5xs7@84.246.84.164:46471',
-    'https': 'http://Uv37g8nf:yjTQ5xs7@84.246.84.164:46471',
-}
-proxies2 = {
-    'http': 'http://Uv37g8nf:yjTQ5xs7@84.246.86.183:54536',
-    'https': 'http://Uv37g8nf:yjTQ5xs7@84.246.86.183:54536',
-}
-proxies3 = {
-    'http': 'http://Uv37g8nf:yjTQ5xs7@84.246.109.182:56688',
-    'https': 'http://Uv37g8nf:yjTQ5xs7@84.246.109.182:56688',
-}
-proxies4 = {
-    'http': 'http://Uv37g8nf:yjTQ5xs7@2.56.136.96:59907',
-    'https': 'http://Uv37g8nf:yjTQ5xs7@2.56.136.96:59907',
-}
-proxies5 = {
-    'http': 'http://Uv37g8nf:yjTQ5xs7@2.57.150.4:51578',
-    'https': 'http://Uv37g8nf:yjTQ5xs7@2.57.150.4:51578',
-}
-
 
 def get_page(url):
     req = requests.get(url, headers=headers)
@@ -75,7 +54,6 @@ def get_page_data(url):
         )
 
     product_urls = []
-    # articles = []
     req = requests.get(url, headers=headers)
     src = req.text
     soup = BeautifulSoup(src, 'lxml')
@@ -179,7 +157,7 @@ def get_page_data(url):
 
 
 def main():
-    # get_page(site)
+    get_page(site)
     get_page_data(site)
 
 

@@ -1,6 +1,5 @@
 import csv
 import time
-
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent  # pip install fake-useragent
@@ -172,7 +171,7 @@ def get_page_data(url):
 
 
 def main():
-    # get_page(site)
+    get_page(site)
     get_page_data(site)
 
 

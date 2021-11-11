@@ -1,6 +1,5 @@
 import csv
 import re
-
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
@@ -57,7 +56,7 @@ def get_data(url):
     soup = BeautifulSoup(src, 'lxml')
     pages = int(soup.find('ul', class_='pagination').find_all('a')[-3].text)
 
-    for page in range(1, pages + 1):  # pages + 1
+    for page in range(1, pages + 1):
         page_url = f'https://geona-russia.ru/vhodnye-dveri?page={page}'
         req = requests.get(page_url, headers=headers)
         res = req.text

@@ -1,7 +1,5 @@
 import csv
-import re
 import time
-
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent  # pip install fake-useragent
@@ -12,7 +10,7 @@ options = webdriver.FirefoxOptions()
 options.set_preference('dom.webdriver.enabled', False)
 ua = UserAgent()
 options.add_argument(ua.random)
-# options.add_argument('--headless')
+options.add_argument('--headless')
 browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
 site = 'https://labirintdoors.ru'
 
@@ -79,26 +77,14 @@ def get_page_data(page):
             for urls in soup.find('div', class_='product-sections-01__inner section__content').find_all('a', class_='product-sections-01-item__img-container'):
                 url = site + urls.get('href')
                 soup = make_request(url)
-                # req = requests.get(url, headers=headers)
-                # src = req.text
-                # soup = BeautifulSoup(src, 'lxml')
                 pages = int(soup.find('ul', class_='products-pagination__list').find_all('a')[-2].text)
                 pagination(pages, url)
-                # for page in range(1, pages + 1):
-                #     page_url = f'{url}/?sort=position&direction=asc&page={page}'
-                #     get_items_data(page_url)
         except:
             for links in soup.find('ul', class_='sections-01-list sections-01-list_columns_four sections-01__list').find_all('a'):
                 link = site + links.get('href')
                 soup = make_request(link)
-                # req = requests.get(link, headers=headers)
-                # src = req.text
-                # soup = BeautifulSoup(src, 'lxml')
                 pages = int(soup.find('ul', class_='products-pagination__list').find_all('a')[-2].text)
                 pagination(pages, url)
-                # for page in range(1, pages + 1):
-                #     page_url = f'{link}/?sort=position&direction=asc&page={page}'
-                #     get_items_data(page_url)
 
 
 def get_items_data(url):
@@ -122,7 +108,6 @@ def get_items_data(url):
         except:
             gallery = None
         try:
-            # metal_thickness = browser.find_elements(By.XPATH, '/html/body/div[2]/main/div[2]/div/div/div/div/div[3]/div/div/div[5]/div/dl[1][contains(text(),"Сталь")]').text
             metal_thickness = browser.find_element(By.XPATH,
                                                    '/html/body/div[2]/main/div[2]/div/div/div/div/div[3]/div/div/div[5]//*[contains(text(),"Конструкция")]//following-sibling::dd').text
         except:
@@ -197,7 +182,7 @@ def get_items_data(url):
 
 
 def main():
-    # get_page(site)
+    get_page(site)
     get_page_data('index.html')
 
 

@@ -1,8 +1,5 @@
 import csv
 import re
-import time
-from random import choice
-
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent  # pip install fake-useragent
@@ -16,15 +13,6 @@ headers = {
     'User-Agent': user,
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
 }
-
-# with open('proxy.txt') as file:
-#     proxy_base = ''.join(file.readlines()).strip().split('\n')
-#     for proxy in proxy_base:
-#
-#         proxies = {
-#             'http': f'http://{proxy}',
-#             'https': f'https://{proxy}'
-#         }
 
 
 def get_index(url):
@@ -73,9 +61,8 @@ def get_page_data(pages):
         )
     item_links = []
 
-    for page in range(1, pages + 1):  # pages + 1
+    for page in range(1, pages + 1):
         page_url = f'http://dveri-lex.ru/category/dveri/?page={page}'
-        print(page_url)
         req = requests.get(page_url, headers=headers)
         res = req.text
         soup = BeautifulSoup(res, 'lxml')
@@ -106,8 +93,6 @@ def get_page_data(pages):
                 external_panel_name = soup.find(text=re.compile('Внешняя отделка')).find_next().text.strip()
             except:
                 external_panel_name = None
-
-
             img_internal_panel = image
             try:
                 internal_panel_name_1 = soup.find(text=re.compile('Отделка внутри')).find_parent('p').text.split(':')[1]
@@ -117,7 +102,6 @@ def get_page_data(pages):
                 internal_panel_name = soup.find(text=re.compile('Внутренняя отделка')).find_next().text.strip()
             except:
                 internal_panel_name = None
-            # print(internal_panel_name_1, internal_panel_name)
             try:
                 metal_thickness = soup.find(text=re.compile('Дверное полотно')).find_parent('p').text.split(':')[1]
             except:
@@ -183,7 +167,6 @@ def get_page_data(pages):
 
 def main():
     get_index(site)
-    pagination('index.html')
     get_page_data(pagination('index.html'))
 
 
