@@ -1,24 +1,20 @@
-# import pandas
 import time
-
+import itertools
 import requests
-# import csv
+import csv
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent  # pip install fake-useragent
-import json
-import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-# options = webdriver.FirefoxOptions()
+options = webdriver.FirefoxOptions()
 ua = UserAgent()
 
 # options.add_argument(ua.random)
 # options.set_preference('dom.webdriver.enabled', False)
-# options.add_argument('--headless')
-#
-# browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
+options.add_argument('--headless')
+browser = webdriver.Firefox(executable_path='/home/evgeny/PycharmProjects/MultiParser/geckodriver', options=options)
 
 
 site = 'https://guardian.ru/katalog/'
@@ -36,114 +32,112 @@ def make_request(url, header):
     return soup
 
 
-def pagination(model, url):
-    for page in range(1, 3):
-        page_url = f'{url}/?sort=position&direction=asc&page={page}'
+def get_data():
+    with open('guardian.csv', 'w', encoding='UTF-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            (
+                'Наименование',
+                'Цена товара',
+                'Изображение товара',
+                'Описание товара',
+                'Внешняя панель(да\нет)',
+                'Производитель(Фирма производитель)',
+                'Картинка панель внешняя',
+                'Панель внешняя название',
+                'Картинка панель внутренняя',
+                'Панель внутренняя название',
+                'Толщина металла',
+                'Контуры уплотнения',
+                'Размеры',
+                'Наполнение двери',
+                'Стеклопакет(да\нет)',
+                'Зеркало(да\нет)',
+                'Терморазрыв(да\нет)',
+                'Магнитный уплотнитель(да\нет)',
+                'Галерея',
+            )
+        )
 
+    with open('links.txt') as f:
+        base_urls = ''.join(f.readlines()).strip().split('\n')
+        urls = [i for i in base_urls]
 
-# save the page
-def get_page(url):
-    req = requests.get(url, headers=header)
-    src = req.text
-
-    with open('index.html', 'w') as file:
-        index = file.write(src)
-    return index
-
-
-# read index.html
-def get_data(html):
-
-    
-    with open(html) as f:
-        src = f.read()
-        soup = BeautifulSoup(src, 'lxml')
-
-        menu = soup.select('div.secondary:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > div:nth-child(2) > ul:nth-child(1) > li > a')
-        for link in menu:
-            url = domain + link.get('href')
+        for url in urls:
             soup = make_request(url, header)
-            div = soup.find('h1').next.next.next.next.next_element.next.next
-            print(div)
-            # browser.get(url)
-            # time.sleep(5)
-            
-            # links = browser.find_element(By.XPATH, '/html/body/section[5]/div/div/div/div[2]/div[2]')
-            # print(links)
-            # index = soup.find('div', attrs=re.compile('interchange'))
-            # for link in index:
-            #     link.has_attr('data-interchange')
-            #     print(link)
-            # 
+            pages = int(soup.find('ul', class_='pagination').find_all('a')[-2].text)
+
+            for page, link in itertools.product(range(1, 3), urls): # pages + 1
+                url = link.replace('%D0%A4%D0%B8%D0%BB%D1%8C%D1%82%D1%80&set_filter=Y', '')
+                page_url = f'{url}Y&PAGEN_1={page}'
+                soup = make_request(page_url, header) # get page 1 - ....
+                for item in soup.find_all('div', class_='card-section'):
+                    item_url = domain + item.find('a').get('href')
+
+                    # get items data
+                    browser.get(item_url)
+                    time.sleep(1)
+                    name = browser.find_element(By.XPATH, '//h1[contains(@class, "h2 margin-top-empty")]').text
+                    price = browser.find_element(By.XPATH, '//span[contains(@class, "price")]').text
+                    image_out = browser.find_element(By.XPATH, '/html/body/section[5]/div/div/div[1]/div/div[1]/div[1]/a').get_attribute('href')
+                    image_in = browser.find_element(By.XPATH, '/html/body/section[5]/div/div/div[1]/div/div[1]/div[2]/p[1]/a').get_attribute('href')
+                    image = (image_out, image_in)
+
+                    browser.find_element(By.XPATH, '//*[text()="Характеристики"]').click()
+                    time.sleep(3)
+                    desc = browser.find_element(By.XPATH, '/html/body/section[5]/div/div/div[2]/div[2]/div/section/table').text
+                    manufacturer = browser.find_element(By.XPATH, '//*[contains(text(),"Производитель")]//following-sibling::td').text
+                    try:
+                        external_panel = browser.find_element(By.XPATH, '//*[contains(text(),"Отделка снаружи")]//following-sibling::td').text
+                    except:
+                        external_panel = None
+                    img_external_panel = image_out
+                    img_internal_panel = image_in
+                    internal_panel = browser.find_element(By.XPATH, '//*[contains(text(),"Отделка изнутри")]//following-sibling::td').text
+                    metal_thickness = browser.find_element(By.XPATH, '//*[contains(text(),"Толщина полотна двери")]//following-sibling::td').text
+                    seal_contours = browser.find_element(By.XPATH, '//*[contains(text(),"Количество контуров")]//following-sibling::td').text
+                    size = browser.find_element(By.XPATH, '//*[contains(text(),"Типовые размеры")]//following-sibling::td').text
+                    door_filling = browser.find_element(By.XPATH, '//*[contains(text(),"Наполнитель дверного полотна")]//following-sibling::td').text
+                    try:
+                        external_panel_ = ['Да' if 'металл' in external_panel else 'Нет']
+                    except:
+                        external_panel_ = None
+                    glazed_window = None
+                    mirror = None
+                    thermal_break = None
+                    magnetic_seal = None
+                    gallery = None
 
 
-            # for link in browser.find_elements(By.XPATH, '/html/body/section[5]/div/div/div/div[2]/div[2]/ul/li/a'):
-            #     page_links.append(link)
-            #
-            # links = [link.click() for link in page_links]
-            # links = [link.text for link in soup.select('.pagination > li > a')]
-
-            # soup = make_request(url, header)
-            # pagination = soup.select('.pagination > li > a')
-            # for link in pagination:
-            #     link.click()
-            # print(pagination)
-            # pages = '/katalog/kupit/?arrFilter_pf%5BDOOR_MODEL_APPLY%5D=20256&set_filter=Y&PAGEN_1=2'
-
-
-
-        # item_data = []
-        # specifications = []
-        # for link in soup.find_all('div', class_='card'):
-        #     name = link.find('h2', attrs={'itemprop': 'name'}).text
-        #     item_urls = domain + link.find('h2', attrs={'itemprop': 'name'}).find('a').get('href')
-        #     price = link.find('span', class_='price').text
-        #     image = domain + link.find('div', class_='card-image').find('img').get('src')
-        #
-        #     # get data from item page
-        #     req_item_urls = requests.get(item_urls, headers=headers)
-        #     items_src = req_item_urls.text
-        #     soup = BeautifulSoup(items_src, 'lxml')
-        #     short_desc = soup.find('section', id='model-design').find_next('h2').text
-        #     img_desc = [domain + img.get('src') for img in soup.find_all('img', attrs={'itemprop': 'contentUrl'})]
-        #     long_dec = [desc.text.strip() for desc in soup.find_all('div', attrs={'itemprop': 'description'})]
-        #     specification_url = domain + soup.find('a', class_='read-more').get('href')
-        #     item_data.append(
-        #             {
-        #                 'Наименование': name,
-        #                 'Панель внешняя': short_desc,
-        #                 'Картинка панель внешняя': image,
-        #                 'Картинка панель внутренняя': img_desc,
-        #                 'Описание товара': long_dec,
-        #                 'Цена товара': price,
-        #                 'Изображение товара': image,
-        #                 'Галерея': img_desc,
-        #             }
-        #         )
-        #     get_json(item_data)
-        #
-        #     # get specification from specification page
-        #     req_specification = requests.get(specification_url, headers=headers)
-        #     specification_src = req_specification.text
-        #     soup = BeautifulSoup(specification_src, 'lxml')
-        #
-        #     for row in soup.find('table').find('tbody').find_all('tr'):
-        #         col = row.find_all('td')
-        #         if len(col) != 1:
-        #             title = col[0].text
-        #             description = col[1].text.strip().replace('\t', '')
-        #
-        #             specifications.append(
-        #                 {
-        #                     title: description
-        #                 }
-        #             )
-        #     get_json(specifications)
+                    with open('guardian.csv', 'a', encoding='UTF-8') as file:
+                        writer = csv.writer(file)
+                        writer.writerow(
+                            (
+                                name,
+                                price,
+                                image,
+                                desc,
+                                external_panel_,
+                                manufacturer,
+                                img_external_panel,
+                                external_panel,
+                                img_internal_panel,
+                                internal_panel,
+                                metal_thickness,
+                                seal_contours,
+                                size,
+                                door_filling,
+                                glazed_window,
+                                mirror,
+                                thermal_break,
+                                magnetic_seal,
+                                gallery,
+                            )
+                        )
 
 
 def main():
-    # get_page(site)
-    get_data('index.html')
+    get_data()
 
 
 if __name__ == '__main__':
