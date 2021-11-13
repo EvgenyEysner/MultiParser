@@ -88,7 +88,7 @@ def get_page_data(page):
                 except:
                     desc = None
                 try:
-                    name = soup.find('small').find_all_previous()[1].text.replace('✓', '').replace('Скидки и Акции', '').replace('Хит продаж', '')
+                    name = soup.find('small').find_all_previous()[1].text.replace('✓', '').replace('Скидки и Акции', '').replace('Хит продаж', '').upper()
                 except:
                     name = None
                 try:
@@ -100,7 +100,7 @@ def get_page_data(page):
                 except:
                     price_1 = None
                 try:
-                    construction = soup.find(text=re.compile('конструкция', re.IGNORECASE)).next_element.next_element #find_all_previous('span')[1].text
+                    construction = soup.find(text=re.compile('конструкция', re.IGNORECASE)).next_element.next_element
                 except:
                     construction = None
                 try:
@@ -120,7 +120,7 @@ def get_page_data(page):
                 except:
                     magnetic_seal = None
                 try:
-                    mirror = ['Да' if 'зеркало' in construction else 'Нет']
+                    mirror = ['Да' if 'зеркало' in name else 'Нет']
                 except:
                     mirror = None
                 try:
@@ -137,46 +137,53 @@ def get_page_data(page):
                     door_filling = None
                 manufacturer = 'АРГУС'
                 gallery = None
-
-                try:
-                    ext_panel_links = [url.get('href') for url in soup.find_all('a', href=re.compile('vneshnie'))]
-                    external_panel_ = ['Да' if ext_panel_links else 'Нет']
-                    for link in ext_panel_links:
-                        soup = make_request(link)
-                        e_panel = soup.find('div', class_='media-body').find_all(text=re.compile('Цвет'))
-                    external_panel = [panel.find_all_previous('span')[1].text.split(':')[1].replace('.', '') for panel in e_panel]
-                    img_external_panel = [panel.find_previous('a', class_='colorbox').get('href') for panel in e_panel]
+                # try:
+                #     ext_panel_links = [url.get('href') for url in soup.find_all('a', href=re.compile('vneshnie'))]
+                #     external_panel_ = ['Да' if ext_panel_links else 'Нет']
+                #     for link in ext_panel_links:
+                #         soup = make_request(link)
+                #         e_panel = soup.find('div', class_='media-body').find_all(text=re.compile('Цвет'))
+                #     external_panel = [panel.find_all_previous('span')[1].text.split(':')[1].replace('.', '') for panel in e_panel]
+                #     img_external_panel = [panel.find_previous('a', class_='colorbox').get('href') for panel in e_panel]
                     #     e_panel = soup.find('div', class_='media-body').find_all(text=re.compile('Цвет'))
                     # for panel in e_panel:
                     #     external_panel = panel.find_all_previous('span')[1].text.split(':')[1].replace('.', '')
                     #     img_external_panel = panel.find_previous('a', class_='colorbox').get('href')
+                # except:
+                #     external_panel = None
+                #     img_external_panel = None
+                try:
+                    image = soup.find('img', attrs={'width': '500'}).get('src')
+                except:
+                    None
+                try:
+                    ext_panel_links = [url.get('href') for url in soup.find_all('a', href=re.compile('vneshnie'))]
+                    external_panel = soup.find(text=re.compile('ВНЕШНЯЯ ОТДЕЛКА', re.IGNORECASE)).find_all_previous('span')[1].text.split(':')[1]
+                    external_panel_ = ['Да' if ext_panel_links else 'Нет']
+                    img_external_panel = image
                 except:
                     external_panel = None
                     img_external_panel = None
-                try:
-                    external_panel = soup.find(text=re.compile('ВНЕШНЯЯ ОТДЕЛКА', re.IGNORECASE)).find_all_previous('span')[1].text.split(':')[1]
-                    image = soup.find('img', attrs={'width': '500'})
-                except:
-                    pass
-
+                # try:
+                #     int_panel_links = [url.get('href') for url in soup.find_all('a', href=re.compile('vnutrennie'))]
+                #     for int_panel in int_panel_links:
+                #         soup = make_request(int_panel)
+                #         i_panels = soup.find_all(text=re.compile('Возможные цвета'))
+                #     internal_panel = [internal.find_previous('td').text.split(':')[1].replace('\n\t\t\t', '').replace('----', '') for internal in i_panels]
+                #     img_internal_panel = [internal.find_previous('a', class_='colorbox').get('href') for internal in i_panels]
+                #     # for internal in i_panels:
+                #     #     internal_panel = internal.find_previous('td').text.split(':')[1].replace('\n\t\t\t', '').replace('----', '')
+                #     #     img_internal_panel = internal.find_previous('a', class_='colorbox').get('href')
+                # except:
+                #     img_internal_panel = None
+                #     internal_panel = None
                 try:
                     int_panel_links = [url.get('href') for url in soup.find_all('a', href=re.compile('vnutrennie'))]
-                    for int_panel in int_panel_links:
-                        soup = make_request(int_panel)
-                        i_panels = soup.find_all(text=re.compile('Возможные цвета'))
-                    internal_panel = [internal.find_previous('td').text.split(':')[1].replace('\n\t\t\t', '').replace('----', '') for internal in i_panels]
-                    img_internal_panel = [internal.find_previous('a', class_='colorbox').get('href') for internal in i_panels]
-                    # for internal in i_panels:
-                    #     internal_panel = internal.find_previous('td').text.split(':')[1].replace('\n\t\t\t', '').replace('----', '')
-                    #     img_internal_panel = internal.find_previous('a', class_='colorbox').get('href')
-                except:
-                    img_internal_panel = None
-                    internal_panel = None
-                try:
                     internal_panel = soup.find(text=re.compile('ВНУТРЕННЯЯ ОТДЕЛКА', re.IGNORECASE)).find_all_previous('span')[1].text.split(':')[1]
-                    image = soup.find('img', attrs={'width': '500'}).get('src')
+                    img_internal_panel = image
                 except:
-                    pass
+                    internal_panel = None
+                    img_internal_panel = None
                 with open('argus.csv', 'a', encoding='UTF-8') as file:
                     writer = csv.writer(file)
                     writer.writerow(
@@ -202,28 +209,6 @@ def get_page_data(page):
                             gallery,
                         )
                     )
-
-                        # doors.append({
-                        #
-                        #
-                        #     'Изображение товара': image,
-                        #     #'Описание товара': desc,
-                        #     'Внешняя панель(да\нет)': external_panel_,
-                        #     'Производитель(Фирма производитель)': manufacturer,
-                        #     'Картинка панель внешняя': img_external_panel,
-                        #     'Панель внешняя название': external_panel,
-                        #     'Картинка панель внутренняя': img_internal_panel,
-                        #     'Панель внутренняя название': internal_panel,
-                        #     'Толщина металла': metal_thickness,
-                        #     'Контуры уплотнения': seal_contours,
-                        #     'Размеры': size,
-                        #     'Наполнение двери': door_filling,
-                        #     'Стеклопакет(да\нет)': glazed_window,
-                        #     'Зеркало(да\нет)': mirror,
-                        #     'Терморазрыв(да\нет)': thermal_break,
-                        #     'Магнитный уплотнитель(да\нет)': magnetic_seal,
-                        #     'Галерея': gallery
-                        # })
 
 
 def main():
